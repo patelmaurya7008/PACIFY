@@ -1,0 +1,148 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { VenueEvent, SiteSettings, CategoryType, BookingFormValues } from '../types';
+import { INITIAL_VENUES, DEFAULT_SITE_SETTINGS } from '../data/defaultData';
+
+interface AppContextType {
+  venues: VenueEvent[];
+  setVenues: React.Dispatch<React.SetStateAction<VenueEvent[]>>;
+  settings: SiteSettings;
+  updateSettings: (newSettings: Partial<SiteSettings>) => void;
+  selectedCategory: CategoryType;
+  setSelectedCategory: (cat: CategoryType) => void;
+  activeDetailVenue: VenueEvent | null;
+  openVenueDetails: (venue: VenueEvent) => void;
+  closeVenueDetails: () => void;
+  bookingPreselect: { venueId: string; passType: string } | null;
+  startBooking: (venueId: string, passType?: string) => void;
+  clearBookingPreselect: () => void;
+  isEditorOpen: boolean;
+  setIsEditorOpen: (open: boolean) => void;
+  recentBooking: (BookingFormValues & { venueName: string; passPrice: string; bookingId: string }) | null;
+  setRecentBooking: (booking: (BookingFormValues & { venueName: string; passPrice: string; bookingId: string }) | null) => void;
+  resetAllToDefault: () => void;
+  formatPrice: (priceStr: string) => string;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const VENUES_STORAGE_KEY = 'pacify_navratri_venues_v1';
+const SETTINGS_STORAGE_KEY = 'pacify_navratri_settings_v1';
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [venues, setVenues] = useState<VenueEvent[]>(() => {
+    try {
+      const saved = localStorage.getItem(VENUES_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback to initial
+    }
+    return INITIAL_VENUES;
+  });
+
+  const [settings, setSettings] = useState<SiteSettings>(() => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback to default
+    }
+    return DEFAULT_SITE_SETTINGS;
+  });
+
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>('All Venues');
+  const [activeDetailVenue, setActiveDetailVenue] = useState<VenueEvent | null>(null);
+  const [bookingPreselect, setBookingPreselect] = useState<{ venueId: string; passType: string } | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [recentBooking, setRecentBooking] = useState<(BookingFormValues & { venueName: string; passPrice: string; bookingId: string }) | null>(null);
+
+  // Sync to local storage
+  useEffect(() => {
+    try {
+      localStorage.setItem(VENUES_STORAGE_KEY, JSON.stringify(venues));
+    } catch (e) {
+      console.warn('Could not save venues to localStorage', e);
+    }
+  }, [venues]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.warn('Could not save settings to localStorage', e);
+    }
+  }, [settings]);
+
+  const updateSettings = (newSettings: Partial<SiteSettings>) => {
+    setSettings((prev) => ({ ...prev, ...newSettings }));
+  };
+
+  const openVenueDetails = (venue: VenueEvent) => {
+    setActiveDetailVenue(venue);
+  };
+
+  const closeVenueDetails = () => {
+    setActiveDetailVenue(null);
+  };
+
+  const startBooking = (venueId: string, passType: string = 'Single Pass') => {
+    setBookingPreselect({ venueId, passType });
+    setActiveDetailVenue(null);
+    const bookingEl = document.getElementById('booking');
+    if (bookingEl) {
+      bookingEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const clearBookingPreselect = () => {
+    setBookingPreselect(null);
+  };
+
+  const resetAllToDefault = () => {
+    setVenues(INITIAL_VENUES);
+    setSettings(DEFAULT_SITE_SETTINGS);
+    localStorage.removeItem(VENUES_STORAGE_KEY);
+    localStorage.removeItem(SETTINGS_STORAGE_KEY);
+  };
+
+  const formatPrice = (priceStr: string) => {
+    if (settings.usePlaceholderPrices) {
+      return '₹[PRICE]';
+    }
+    return priceStr;
+  };
+
+  return (
+    <AppContext.Provider
+      value={{
+        venues,
+        setVenues,
+        settings,
+        updateSettings,
+        selectedCategory,
+        setSelectedCategory,
+        activeDetailVenue,
+        openVenueDetails,
+        closeVenueDetails,
+        bookingPreselect,
+        startBooking,
+        clearBookingPreselect,
+        isEditorOpen,
+        setIsEditorOpen,
+        recentBooking,
+        setRecentBooking,
+        resetAllToDefault,
+        formatPrice,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
+};

@@ -1,0 +1,6 @@
+{
+  "name": "PACIFY Navratri Passes",
+  "description": "Premium Navratri Event Pass Booking platform for Gujarat's most prestigious Garba venues, celebrity nights, and festive celebrations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
