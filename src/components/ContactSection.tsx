@@ -16,7 +16,8 @@ export const ContactSection: React.FC = () => {
   const { settings, setIsEditorOpen } = useApp();
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
 
-  const cleanPhone = settings.phone.replace(/[^0-9]/g, '');
+  const rawDigits = settings.phone.replace(/[^0-9]/g, '');
+  const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits || '917359467008';
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);

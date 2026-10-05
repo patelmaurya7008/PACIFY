@@ -25,14 +25,21 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const VENUES_STORAGE_KEY = 'pacify_navratri_venues_v1';
-const SETTINGS_STORAGE_KEY = 'pacify_navratri_settings_v1';
+const VENUES_STORAGE_KEY = 'pacify_navratri_venues_v10';
+const SETTINGS_STORAGE_KEY = 'pacify_navratri_settings_v10';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [venues, setVenues] = useState<VenueEvent[]>(() => {
     try {
       const saved = localStorage.getItem(VENUES_STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: VenueEvent[] = JSON.parse(saved);
+        // Ensure image assets always reflect the latest imported files
+        return parsed.map((v) => {
+          const fresh = INITIAL_VENUES.find((iv) => iv.id === v.id);
+          return fresh ? { ...v, image: fresh.image, galleryImages: fresh.galleryImages } : v;
+        });
+      }
     } catch {
       // fallback to initial
     }

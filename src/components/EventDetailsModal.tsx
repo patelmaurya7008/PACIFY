@@ -51,13 +51,14 @@ export const EventDetailsModal: React.FC = () => {
         <div className="overflow-y-auto p-6 sm:p-8 space-y-8 flex-1">
           {/* Main Visual & Gallery Strip */}
           <div className="space-y-3">
-            <div className="relative aspect-16/9 rounded-2xl overflow-hidden bg-stone-100">
+            <div className="relative aspect-16/10 sm:aspect-16/9 rounded-2xl overflow-hidden bg-stone-100">
               <img
                 src={images[activeImageIndex] || activeDetailVenue.image}
                 alt={activeDetailVenue.name}
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-3 left-3 bg-stone-950/70 text-white text-[11px] px-2.5 py-1 rounded-full backdrop-blur-xs font-medium">
                 Photo {activeImageIndex + 1} of {images.length}
               </div>
@@ -145,43 +146,34 @@ export const EventDetailsModal: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-display text-lg font-bold text-stone-900">
-                Available Pass Types & Current Prices
+                Official Pass Options & Pricing
               </h3>
               <span className="text-[11px] text-stone-500 font-medium">Digital QR Wristband</span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 rounded-xl border border-stone-200 bg-stone-50">
-                <span className="text-[11px] font-medium text-stone-500 block">Single Pass</span>
-                <span className="text-base font-bold text-stone-900 mt-1 block font-mono">
-                  {formatPrice(activeDetailVenue.prices.single)}
-                </span>
-                <span className="text-[10px] text-stone-400 block mt-0.5">1 Person Entry</span>
-              </div>
-
-              <div className="p-3.5 rounded-xl border border-stone-200 bg-stone-50">
-                <span className="text-[11px] font-medium text-stone-500 block">Couple Pass</span>
-                <span className="text-base font-bold text-stone-900 mt-1 block font-mono">
-                  {formatPrice(activeDetailVenue.prices.couple)}
-                </span>
-                <span className="text-[10px] text-stone-400 block mt-0.5">1 Male + 1 Female</span>
-              </div>
-
-              <div className="p-3.5 rounded-xl border border-amber-300 bg-amber-50/60">
-                <span className="text-[11px] font-bold text-amber-800 block">VIP Pass</span>
-                <span className="text-base font-bold text-amber-900 mt-1 block font-mono">
-                  {formatPrice(activeDetailVenue.prices.vip)}
-                </span>
-                <span className="text-[10px] text-amber-700 block mt-0.5">Lounge + Valet</span>
-              </div>
-
-              <div className="p-3.5 rounded-xl border border-stone-200 bg-stone-50">
-                <span className="text-[11px] font-medium text-stone-500 block">Group Pass</span>
-                <span className="text-base font-bold text-stone-900 mt-1 block font-mono">
-                  {formatPrice(activeDetailVenue.prices.group)}
-                </span>
-                <span className="text-[10px] text-stone-400 block mt-0.5">5+ Squad Bundle</span>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(activeDetailVenue.passOptions && activeDetailVenue.passOptions.length > 0
+                ? activeDetailVenue.passOptions
+                : [{ id: 'p1', name: 'Entry Pass', price: 900, description: 'Standard arena pass' }]
+              ).map((pass) => (
+                <div
+                  key={pass.id}
+                  className="p-4 rounded-xl border border-stone-200 bg-stone-50 flex items-center justify-between gap-3"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-stone-900 block">{pass.name}</span>
+                    {pass.description && (
+                      <span className="text-[11px] text-stone-500 block mt-0.5">{pass.description}</span>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-base font-extrabold text-amber-950 font-mono block">
+                      ₹{pass.price.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[10px] text-stone-400 uppercase">Per Pass</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -235,7 +227,7 @@ export const EventDetailsModal: React.FC = () => {
             </a>
 
             <button
-              onClick={() => startBooking(activeDetailVenue.id, 'Single Pass')}
+              onClick={() => startBooking(activeDetailVenue.id, activeDetailVenue.passOptions?.[0]?.name || 'Entry Pass')}
               className="flex-1 sm:flex-initial px-6 py-2.5 text-xs font-semibold text-stone-900 bg-amber-400 hover:bg-amber-300 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
             >
               <Ticket className="w-4 h-4" />

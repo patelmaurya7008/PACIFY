@@ -16,6 +16,13 @@ export interface PassPricing {
   group: string;
 }
 
+export interface PassOptionItem {
+  id: string;
+  name: string; // e.g. "With Unlimited Food", "Without Food", "Gold Pass", "Platinum Pass", "Entry Pass"
+  price: number; // e.g. 850, 700, 6500, 4000, 900, 1100
+  description?: string;
+}
+
 export interface VenueEvent {
   id: string;
   venueNumber: string; // e.g. "[Venue 01]"
@@ -32,6 +39,7 @@ export interface VenueEvent {
   image: string;
   galleryImages: string[];
   prices: PassPricing;
+  passOptions?: PassOptionItem[];
   garbaType: string;
   description: string;
   capacity: string;
@@ -45,7 +53,9 @@ export interface VenueEvent {
 
 export interface BookingFormValues {
   eventId: string;
-  passType: 'Single Pass' | 'Couple Pass' | 'VIP Pass' | 'Group Pass';
+  passType: string;
+  passPriceNumber?: number;
+  totalPrice?: number;
   quantity: number;
   fullName: string;
   mobile: string;

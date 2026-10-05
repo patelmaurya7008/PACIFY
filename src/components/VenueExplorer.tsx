@@ -150,13 +150,14 @@ export const VenueExplorer: React.FC = () => {
               className="bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-2xs hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden group"
             >
               {/* Venue Image */}
-              <div className="relative aspect-16/10 overflow-hidden bg-stone-100">
+              <div className="relative aspect-16/10 sm:aspect-4/3 overflow-hidden bg-stone-100">
                 <img
                   src={venue.image}
                   alt={venue.name}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
                 <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
                   <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-stone-950/80 text-white backdrop-blur-xs">
                     {venue.venueNumber}
@@ -206,21 +207,17 @@ export const VenueExplorer: React.FC = () => {
                   </div>
 
                   {/* Pass Pricing Preview Matrix */}
-                  <div className="mt-3.5 p-2.5 bg-stone-50 rounded-xl border border-stone-100 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="text-stone-400 block text-[10px] uppercase font-medium">Single</span>
-                      <span className="font-bold text-stone-800">{formatPrice(venue.prices.single)}</span>
-                    </div>
-                    <div className="h-6 w-px bg-stone-200"></div>
-                    <div>
-                      <span className="text-stone-400 block text-[10px] uppercase font-medium">Couple</span>
-                      <span className="font-bold text-stone-800">{formatPrice(venue.prices.couple)}</span>
-                    </div>
-                    <div className="h-6 w-px bg-stone-200"></div>
-                    <div>
-                      <span className="text-stone-400 block text-[10px] uppercase font-medium">VIP Pass</span>
-                      <span className="font-bold text-amber-800">{formatPrice(venue.prices.vip)}</span>
-                    </div>
+                  <div className="mt-3.5 p-2.5 bg-stone-50 rounded-xl border border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    {(venue.passOptions || []).map((pass) => (
+                      <div key={pass.id} className="flex-1 min-w-[100px]">
+                        <span className="text-stone-400 block text-[10px] uppercase font-medium truncate">
+                          {pass.name}
+                        </span>
+                        <span className="font-mono font-bold text-amber-950 text-sm">
+                          ₹{pass.price.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -233,7 +230,7 @@ export const VenueExplorer: React.FC = () => {
                     View Details
                   </button>
                   <button
-                    onClick={() => startBooking(venue.id, 'Single Pass')}
+                    onClick={() => startBooking(venue.id, venue.passOptions?.[0]?.name || 'Entry Pass')}
                     className="flex-1 py-2.5 px-3 text-xs font-semibold text-stone-900 bg-amber-400 hover:bg-amber-300 rounded-xl transition-colors cursor-pointer text-center shadow-2xs"
                   >
                     Book Pass

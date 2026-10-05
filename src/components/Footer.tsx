@@ -14,7 +14,8 @@ export const Footer: React.FC = () => {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const cleanPhone = settings.phone.replace(/[^0-9]/g, '');
+  const rawDigits = settings.phone.replace(/[^0-9]/g, '');
+  const cleanPhone = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits || '917359467008';
 
   return (
     <footer className="bg-stone-900 text-stone-300 pt-16 pb-24 md:pb-16 border-t border-stone-800">

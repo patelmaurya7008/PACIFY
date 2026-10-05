@@ -37,7 +37,7 @@ export const FeaturedEvents: React.FC = () => {
           <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-amber-700 uppercase mb-1.5">
             <span>Official Passes 2026</span>
             <span className="w-1 h-1 rounded-full bg-amber-500"></span>
-            <span>10+ Verified Venues</span>
+            <span>5 Iconic Venues</span>
           </div>
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight">
             Featured Navratri Events
@@ -89,8 +89,9 @@ export const FeaturedEvents: React.FC = () => {
                   src={venue.image}
                   alt={venue.name}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
 
                 {/* Status Badge (Top-Left) */}
                 <div className="absolute top-3 left-3 flex items-center gap-1.5">
@@ -172,7 +173,9 @@ export const FeaturedEvents: React.FC = () => {
                         Passes From
                       </span>
                       <span className="text-base font-bold text-stone-900 font-mono">
-                        {formatPrice(venue.prices.single)}
+                        {venue.passOptions && venue.passOptions.length > 0
+                          ? `₹${venue.passOptions[0].price.toLocaleString('en-IN')}`
+                          : formatPrice(venue.prices.single)}
                       </span>
                     </div>
                     <button
@@ -185,7 +188,7 @@ export const FeaturedEvents: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={() => startBooking(venue.id, 'Single Pass')}
+                    onClick={() => startBooking(venue.id, venue.passOptions?.[0]?.name || 'Entry Pass')}
                     className="w-full py-2.5 px-4 text-xs font-semibold tracking-wide text-stone-900 bg-amber-400 hover:bg-amber-300 rounded-xl transition-all duration-200 cursor-pointer text-center active:scale-[0.99] shadow-2xs"
                   >
                     Book Pass

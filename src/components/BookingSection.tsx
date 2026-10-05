@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { BookingFormValues } from '../types';
+import { BookingFormValues, PassOptionItem } from '../types';
 import {
   Calendar,
   Ticket,
   User,
   Phone,
   Mail,
-  FileText,
   CheckCircle2,
   Sparkles,
   MessageCircle,
@@ -15,6 +14,8 @@ import {
   Printer,
   Copy,
   Check,
+  Utensils,
+  Award,
 } from 'lucide-react';
 
 export const BookingSection: React.FC = () => {
@@ -25,12 +26,22 @@ export const BookingSection: React.FC = () => {
     clearBookingPreselect,
     recentBooking,
     setRecentBooking,
-    formatPrice,
   } = useApp();
 
+  const [selectedVenueId, setSelectedVenueId] = useState<string>(venues[0]?.id || 'venue-01');
+  const selectedVenue = venues.find((v) => v.id === selectedVenueId) || venues[0];
+
+  // Dynamic pass options for selected venue
+  const currentPassOptions: PassOptionItem[] = selectedVenue?.passOptions && selectedVenue.passOptions.length > 0
+    ? selectedVenue.passOptions
+    : [
+        { id: 'standard', name: 'Entry Pass', price: 900, description: 'Standard arena pass' },
+      ];
+
   const [formData, setFormData] = useState<BookingFormValues>({
-    eventId: venues[0]?.id || '',
-    passType: 'Single Pass',
+    eventId: selectedVenueId,
+    passType: currentPassOptions[0]?.name || 'With Unlimited Food',
+    passPriceNumber: currentPassOptions[0]?.price || 850,
     quantity: 2,
     fullName: '',
     mobile: '',
@@ -42,34 +53,48 @@ export const BookingSection: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
+  // Sync with venue change
+  const handleVenueChange = (venueId: string) => {
+    setSelectedVenueId(venueId);
+    const targetVenue = venues.find((v) => v.id === venueId);
+    const passes = targetVenue?.passOptions || [];
+    const defaultPass = passes[0] || { name: 'Entry Pass', price: 900 };
+
+    setFormData((prev) => ({
+      ...prev,
+      eventId: venueId,
+      passType: defaultPass.name,
+      passPriceNumber: defaultPass.price,
+    }));
+  };
+
   // Sync with booking preselection from event cards
   useEffect(() => {
     if (bookingPreselect) {
-      setFormData((prev) => ({
-        ...prev,
-        eventId: bookingPreselect.venueId || prev.eventId,
-        passType: (bookingPreselect.passType as any) || prev.passType,
-      }));
+      const targetVenue = venues.find((v) => v.id === bookingPreselect.venueId) || venues[0];
+      if (targetVenue) {
+        setSelectedVenueId(targetVenue.id);
+        const matchedPass = targetVenue.passOptions?.find(
+          (p) => p.name.toLowerCase() === bookingPreselect.passType.toLowerCase()
+        ) || targetVenue.passOptions?.[0];
+
+        setFormData((prev) => ({
+          ...prev,
+          eventId: targetVenue.id,
+          passType: matchedPass ? matchedPass.name : bookingPreselect.passType,
+          passPriceNumber: matchedPass ? matchedPass.price : 900,
+        }));
+      }
       clearBookingPreselect();
     }
-  }, [bookingPreselect, clearBookingPreselect]);
+  }, [bookingPreselect, venues, clearBookingPreselect]);
 
-  const selectedVenue = venues.find((v) => v.id === formData.eventId) || venues[0];
-
-  const getPassPriceString = () => {
-    if (!selectedVenue) return '₹[PRICE]';
-    switch (formData.passType) {
-      case 'Single Pass':
-        return formatPrice(selectedVenue.prices.single);
-      case 'Couple Pass':
-        return formatPrice(selectedVenue.prices.couple);
-      case 'VIP Pass':
-        return formatPrice(selectedVenue.prices.vip);
-      case 'Group Pass':
-        return formatPrice(selectedVenue.prices.group);
-      default:
-        return '₹[PRICE]';
-    }
+  const handlePassTypeSelect = (pass: PassOptionItem) => {
+    setFormData((prev) => ({
+      ...prev,
+      passType: pass.name,
+      passPriceNumber: pass.price,
+    }));
   };
 
   const handleInputChange = (
@@ -85,6 +110,9 @@ export const BookingSection: React.FC = () => {
     }
   };
 
+  const currentPricePerPass = formData.passPriceNumber || currentPassOptions[0]?.price || 850;
+  const calculatedTotal = currentPricePerPass * (formData.quantity || 1);
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
     if (!formData.fullName.trim()) errors.fullName = 'Please enter your full name';
@@ -97,6 +125,28 @@ export const BookingSection: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const cleanPhone = '917359467008';
+
+  const generateWhatsAppMessageContent = (bookingId: string) => {
+    return `*Navratri Pass Booking Request*
+━━━━━━━━━━━━━━━━━━━━
+*Booking ID:* ${bookingId}
+*Venue:* ${selectedVenue?.name || 'Navratri Venue'}
+*Pass Type:* ${formData.passType}
+*Price per Pass:* ₹${currentPricePerPass.toLocaleString('en-IN')}
+*Quantity:* ${formData.quantity} Pass(es)
+*Total Amount:* ₹${calculatedTotal.toLocaleString('en-IN')}
+*Event Date:* ${formData.preferredDate}
+
+*Guest Information:*
+*Name:* ${formData.fullName}
+*Mobile:* ${formData.mobile}
+*Email:* ${formData.email}
+*Special Notes:* ${formData.notes || 'None'}
+━━━━━━━━━━━━━━━━━━━━
+Please confirm pass availability and send payment QR code.`;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -104,29 +154,26 @@ export const BookingSection: React.FC = () => {
     const randomId = 'PACIFY-' + Math.floor(100000 + Math.random() * 900000);
     const bookingSummary = {
       ...formData,
-      venueName: selectedVenue.name,
-      passPrice: getPassPriceString(),
+      venueName: selectedVenue?.name || 'Selected Venue',
+      passPrice: `₹${currentPricePerPass.toLocaleString('en-IN')}`,
+      totalPrice: calculatedTotal,
       bookingId: randomId,
     };
 
     setRecentBooking(bookingSummary);
-  };
 
-  const cleanPhone = settings.phone.replace(/[^0-9]/g, '');
+    // Redirect to WhatsApp immediately with full booking details
+    const textMsg = generateWhatsAppMessageContent(randomId);
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`;
 
-  const generateWhatsAppMessage = () => {
-    if (!recentBooking) return '';
-    const text = `Hello PACIFY! I want to confirm my Navratri Pass Booking:
-- Booking ID: ${recentBooking.bookingId}
-- Venue: ${recentBooking.venueName}
-- Pass Type: ${recentBooking.passType}
-- Quantity: ${recentBooking.quantity} Pass(es)
-- Date: ${recentBooking.preferredDate}
-- Name: ${recentBooking.fullName}
-- Mobile: ${recentBooking.mobile}
-- Notes: ${recentBooking.notes || 'None'}
-Please confirm pass availability and payment instructions.`;
-    return encodeURIComponent(text);
+    try {
+      const win = window.open(waUrl, '_blank');
+      if (!win) {
+        window.location.href = waUrl;
+      }
+    } catch {
+      window.location.href = waUrl;
+    }
   };
 
   const copyBookingId = () => {
@@ -143,13 +190,13 @@ Please confirm pass availability and payment instructions.`;
         {/* Title */}
         <div className="text-center mb-10">
           <span className="text-xs font-semibold tracking-wider text-amber-700 uppercase">
-            Instant Pass Reservation
+            Official Pass Reservation 2026
           </span>
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight mt-1">
             Book Your Navratri Pass
           </h2>
           <p className="mt-2 text-stone-600 text-xs sm:text-sm">
-            Reserve passes for any of Gujarat’s 10+ premium venues. Instant booking confirmation sent to your WhatsApp and Email.
+            Reserve passes for Gujarat’s 5 iconic venues. Fill the form below to connect instantly with our official ticketing desk on WhatsApp.
           </p>
         </div>
 
@@ -192,7 +239,7 @@ Please confirm pass availability and payment instructions.`;
                 <span className="font-bold text-stone-900 mt-0.5 block">{recentBooking.venueName}</span>
               </div>
               <div>
-                <span className="text-stone-400 block text-[10px] uppercase font-semibold">Pass Type</span>
+                <span className="text-stone-400 block text-[10px] uppercase font-semibold">Pass Category</span>
                 <span className="font-bold text-stone-900 mt-0.5 block">{recentBooking.passType}</span>
               </div>
               <div>
@@ -200,15 +247,19 @@ Please confirm pass availability and payment instructions.`;
                 <span className="font-bold text-stone-900 mt-0.5 block">{recentBooking.quantity} Pass(es)</span>
               </div>
               <div>
-                <span className="text-stone-400 block text-[10px] uppercase font-semibold">Estimated Rate</span>
-                <span className="font-bold text-amber-800 mt-0.5 block font-mono">{recentBooking.passPrice}</span>
+                <span className="text-stone-400 block text-[10px] uppercase font-semibold">Total Amount</span>
+                <span className="font-bold text-amber-800 mt-0.5 block font-mono text-sm">
+                  {recentBooking.totalPrice
+                    ? `₹${recentBooking.totalPrice.toLocaleString('en-IN')}`
+                    : recentBooking.passPrice}
+                </span>
               </div>
               <div>
                 <span className="text-stone-400 block text-[10px] uppercase font-semibold">Guest Name</span>
                 <span className="font-medium text-stone-800 mt-0.5 block">{recentBooking.fullName}</span>
               </div>
               <div>
-                <span className="text-stone-400 block text-[10px] uppercase font-semibold">Mobile</span>
+                <span className="text-stone-400 block text-[10px] uppercase font-semibold">WhatsApp Number</span>
                 <span className="font-medium text-stone-800 mt-0.5 block">{recentBooking.mobile}</span>
               </div>
               <div>
@@ -217,37 +268,37 @@ Please confirm pass availability and payment instructions.`;
               </div>
               <div>
                 <span className="text-stone-400 block text-[10px] uppercase font-semibold">Status</span>
-                <span className="text-emerald-700 font-bold mt-0.5 block">Pending Confirmation</span>
+                <span className="text-emerald-700 font-bold mt-0.5 block">Redirecting to WhatsApp</span>
               </div>
             </div>
 
-            {/* Direct Connect Action Row */}
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs text-stone-500">
-                To guarantee your physical wristbands and express entry, connect directly with our ticketing desk:
+            {/* Direct WhatsApp Callout Banner */}
+            <div className="mt-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-emerald-950">
+                    Confirm Directly on WhatsApp: +91 7359467008
+                  </h4>
+                  <p className="text-[11px] text-emerald-800">
+                    Send the pre-filled message to receive verified QR wristbands and payment details instantly.
+                  </p>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                {/* WhatsApp Action */}
-                <a
-                  href={`https://wa.me/${cleanPhone || '919876543210'}?text=${generateWhatsAppMessage()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Confirm on WhatsApp</span>
-                </a>
-
-                {/* Call Action */}
-                <a
-                  href={`tel:${cleanPhone}`}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                >
-                  <PhoneCall className="w-4 h-4" />
-                  <span>Call Now</span>
-                </a>
-              </div>
+              <a
+                href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                  generateWhatsAppMessageContent(recentBooking.bookingId)
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs whitespace-nowrap"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Open WhatsApp Chat</span>
+              </a>
             </div>
 
             <div className="mt-6 pt-4 border-t border-stone-100 flex justify-between items-center text-xs">
@@ -276,14 +327,14 @@ Please confirm pass availability and payment instructions.`;
               {/* Select Venue/Event */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-stone-800 uppercase tracking-wider mb-2">
-                  Select Venue / Event *
+                  Select Navratri Venue (5 Iconic Venues) *
                 </label>
                 <div className="relative">
                   <select
                     name="eventId"
-                    value={formData.eventId}
-                    onChange={handleInputChange}
-                    className="w-full p-3 text-xs sm:text-sm font-medium rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                    value={selectedVenueId}
+                    onChange={(e) => handleVenueChange(e.target.value)}
+                    className="w-full p-3.5 text-xs sm:text-sm font-semibold rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
                   >
                     {venues.map((v) => (
                       <option key={v.id} value={v.id}>
@@ -294,22 +345,45 @@ Please confirm pass availability and payment instructions.`;
                 </div>
               </div>
 
-              {/* Select Pass Type */}
-              <div>
+              {/* Venue-Specific Pass Options Selector */}
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-stone-800 uppercase tracking-wider mb-2">
-                  Select Pass Type *
+                  Choose Pass Option for {selectedVenue?.name} *
                 </label>
-                <select
-                  name="passType"
-                  value={formData.passType}
-                  onChange={handleInputChange}
-                  className="w-full p-3 text-xs sm:text-sm font-medium rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
-                >
-                  <option value="Single Pass">Single Pass (1 Person)</option>
-                  <option value="Couple Pass">Couple Pass (Male + Female)</option>
-                  <option value="VIP Pass">VIP Pass (Lounge + Valet)</option>
-                  <option value="Group Pass">Group Pass (5+ Members)</option>
-                </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {currentPassOptions.map((pass) => {
+                    const isSelected = formData.passType === pass.name;
+                    return (
+                      <button
+                        type="button"
+                        key={pass.id}
+                        onClick={() => handlePassTypeSelect(pass)}
+                        className={`p-4 rounded-2xl text-left border transition-all cursor-pointer flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-amber-50/80 border-amber-500 ring-2 ring-amber-400/40 shadow-xs'
+                            : 'bg-stone-50 hover:bg-stone-100/70 border-stone-200 text-stone-800'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-sm text-stone-900 flex items-center gap-1.5">
+                            {pass.name.includes('Food') && <Utensils className="w-3.5 h-3.5 text-amber-700" />}
+                            {pass.name.includes('Gold') && <Award className="w-3.5 h-3.5 text-amber-600" />}
+                            {pass.name.includes('Platinum') && <Sparkles className="w-3.5 h-3.5 text-purple-600" />}
+                            {pass.name}
+                          </span>
+                          <span className="font-mono font-extrabold text-base text-amber-900">
+                            ₹{pass.price.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        {pass.description && (
+                          <p className="text-[11px] text-stone-500 mt-2 leading-relaxed">
+                            {pass.description}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Number of Passes */}
@@ -324,8 +398,27 @@ Please confirm pass availability and payment instructions.`;
                   max="50"
                   value={formData.quantity}
                   onChange={handleInputChange}
-                  className="w-full p-3 text-xs sm:text-sm font-medium rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                  className="w-full p-3 text-xs sm:text-sm font-semibold rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
                 />
+              </div>
+
+              {/* Preferred Date */}
+              <div>
+                <label className="block text-xs font-semibold text-stone-800 uppercase tracking-wider mb-2">
+                  Preferred Event Date *
+                </label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="date"
+                    name="preferredDate"
+                    value={formData.preferredDate}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 pr-4 py-3 text-xs sm:text-sm rounded-xl bg-stone-50 border ${
+                      formErrors.preferredDate ? 'border-rose-400' : 'border-stone-200'
+                    } text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500`}
+                  />
+                </div>
               </div>
 
               {/* Name */}
@@ -354,7 +447,7 @@ Please confirm pass availability and payment instructions.`;
               {/* Mobile Number */}
               <div>
                 <label className="block text-xs font-semibold text-stone-800 uppercase tracking-wider mb-2">
-                  Mobile Number (WhatsApp) *
+                  WhatsApp Number *
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -363,7 +456,7 @@ Please confirm pass availability and payment instructions.`;
                     name="mobile"
                     value={formData.mobile}
                     onChange={handleInputChange}
-                    placeholder="e.g. +91 98765 43210"
+                    placeholder="e.g. 7359467008"
                     className={`w-full pl-10 pr-4 py-3 text-xs sm:text-sm rounded-xl bg-stone-50 border ${
                       formErrors.mobile ? 'border-rose-400' : 'border-stone-200'
                     } text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500`}
@@ -375,7 +468,7 @@ Please confirm pass availability and payment instructions.`;
               </div>
 
               {/* Email Address */}
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-stone-800 uppercase tracking-wider mb-2">
                   Email Address *
                 </label>
@@ -386,7 +479,7 @@ Please confirm pass availability and payment instructions.`;
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="name@example.com"
+                    placeholder="e.g. patelmaurya73@gmail.com"
                     className={`w-full pl-10 pr-4 py-3 text-xs sm:text-sm rounded-xl bg-stone-50 border ${
                       formErrors.email ? 'border-rose-400' : 'border-stone-200'
                     } text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500`}
@@ -397,58 +490,45 @@ Please confirm pass availability and payment instructions.`;
                 )}
               </div>
 
-              {/* Preferred Date */}
-              <div>
-                <label className="block text-xs font-semibold text-stone-800 uppercase tracking-wider mb-2">
-                  Preferred Date *
-                </label>
-                <div className="relative">
-                  <Calendar className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="date"
-                    name="preferredDate"
-                    value={formData.preferredDate}
-                    onChange={handleInputChange}
-                    className={`w-full pl-10 pr-4 py-3 text-xs sm:text-sm rounded-xl bg-stone-50 border ${
-                      formErrors.preferredDate ? 'border-rose-400' : 'border-stone-200'
-                    } text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500`}
-                  />
-                </div>
-              </div>
-
               {/* Message / Notes */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-stone-800 uppercase tracking-wider mb-2">
-                  Special Instructions / Group Requirements
+                  Special Instructions or Seating Request (Optional)
                 </label>
                 <textarea
                   name="notes"
-                  rows={3}
+                  rows={2}
                   value={formData.notes}
                   onChange={handleInputChange}
-                  placeholder="Need food coupons, VIP valet, stage front passes, or season passes?"
+                  placeholder="Any dietary restrictions, stage front preferences, or family group details..."
                   className="w-full p-3 text-xs sm:text-sm rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500"
                 />
               </div>
             </div>
 
-            {/* Rate preview & Submit Button */}
+            {/* Total calculation & Submit Button with WhatsApp Redirection */}
             <div className="mt-8 pt-6 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-xs text-stone-600">
-                <span>Selected: </span>
-                <strong className="text-stone-900">
+                <span className="text-stone-400 uppercase tracking-wider text-[11px] block font-semibold">
+                  Calculation Summary
+                </span>
+                <span className="font-medium text-stone-900 text-sm">
                   {formData.quantity}x {formData.passType}
-                </strong>
-                <span className="text-amber-800 font-bold ml-2 font-mono">
-                  @ {getPassPriceString()}
+                </span>
+                <div className="text-xl font-extrabold text-amber-950 font-mono mt-0.5">
+                  Total: ₹{calculatedTotal.toLocaleString('en-IN')}
+                </div>
+                <span className="text-[11px] text-emerald-700 font-medium">
+                  Redirects to WhatsApp (+91 7359467008) on clicking Book Now
                 </span>
               </div>
 
               <button
                 type="submit"
-                className="w-full sm:w-auto px-10 py-3.5 text-xs font-bold uppercase tracking-wider text-stone-900 bg-amber-400 hover:bg-amber-300 rounded-full shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer text-center active:scale-[0.98]"
+                className="w-full sm:w-auto px-8 py-4 text-xs font-extrabold uppercase tracking-wider text-stone-900 bg-amber-400 hover:bg-amber-300 rounded-full shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
               >
-                Book Now
+                <MessageCircle className="w-4 h-4 text-stone-950" />
+                <span>Book Now & Confirm on WhatsApp</span>
               </button>
             </div>
           </form>

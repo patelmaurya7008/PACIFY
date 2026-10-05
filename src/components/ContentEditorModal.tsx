@@ -327,68 +327,30 @@ export const ContentEditorModal: React.FC = () => {
               {/* Pass Pricing */}
               <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200">
                 <span className="text-xs font-bold text-stone-800 uppercase tracking-wider block mb-3">
-                  Pass Pricing for {draftVenue.venueNumber}
+                  Official Pass Pricing for {draftVenue.name}
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-stone-500 mb-1">Single Pass</label>
-                    <input
-                      type="text"
-                      value={draftVenue.prices.single}
-                      onChange={(e) =>
-                        setDraftVenue({
-                          ...draftVenue,
-                          prices: { ...draftVenue.prices, single: e.target.value },
-                        })
-                      }
-                      className="w-full p-2 text-xs font-mono font-bold rounded-lg border border-stone-200 bg-white text-stone-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-stone-500 mb-1">Couple Pass</label>
-                    <input
-                      type="text"
-                      value={draftVenue.prices.couple}
-                      onChange={(e) =>
-                        setDraftVenue({
-                          ...draftVenue,
-                          prices: { ...draftVenue.prices, couple: e.target.value },
-                        })
-                      }
-                      className="w-full p-2 text-xs font-mono font-bold rounded-lg border border-stone-200 bg-white text-stone-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-stone-500 mb-1">VIP Pass</label>
-                    <input
-                      type="text"
-                      value={draftVenue.prices.vip}
-                      onChange={(e) =>
-                        setDraftVenue({
-                          ...draftVenue,
-                          prices: { ...draftVenue.prices, vip: e.target.value },
-                        })
-                      }
-                      className="w-full p-2 text-xs font-mono font-bold rounded-lg border border-stone-200 bg-white text-amber-800"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-stone-500 mb-1">Group Pass</label>
-                    <input
-                      type="text"
-                      value={draftVenue.prices.group}
-                      onChange={(e) =>
-                        setDraftVenue({
-                          ...draftVenue,
-                          prices: { ...draftVenue.prices, group: e.target.value },
-                        })
-                      }
-                      className="w-full p-2 text-xs font-mono font-bold rounded-lg border border-stone-200 bg-white text-stone-900"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(draftVenue.passOptions || []).map((pass, pIdx) => (
+                    <div key={pass.id} className="p-3 bg-white rounded-xl border border-stone-200">
+                      <label className="block text-[11px] font-semibold text-stone-700 mb-1">
+                        {pass.name} (₹)
+                      </label>
+                      <input
+                        type="number"
+                        value={pass.price}
+                        onChange={(e) => {
+                          const newPrice = Math.max(0, parseInt(e.target.value) || 0);
+                          const updatedOptions = [...(draftVenue.passOptions || [])];
+                          updatedOptions[pIdx] = { ...pass, price: newPrice };
+                          setDraftVenue({
+                            ...draftVenue,
+                            passOptions: updatedOptions,
+                          });
+                        }}
+                        className="w-full p-2 text-xs font-mono font-bold rounded-lg border border-stone-200 bg-stone-50 text-stone-900"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 

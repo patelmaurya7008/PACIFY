@@ -62,7 +62,7 @@ export const Hero: React.FC = () => {
                 fill="currentColor"
               />
             </svg>
-            <span>Shop Now Your Passes</span>
+            <span>Book Your Pass</span>
           </button>
         </div>
 
@@ -70,7 +70,7 @@ export const Hero: React.FC = () => {
         <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-xs font-medium text-stone-500">
           <div className="flex items-center gap-1.5">
             <Check className="w-4 h-4 text-amber-600" />
-            <span className="text-stone-700 font-semibold">10+ Venues</span>
+            <span className="text-stone-700 font-semibold">5 Iconic Venues</span>
           </div>
           <span className="text-stone-300">·</span>
           <div className="flex items-center gap-1.5">
@@ -166,7 +166,7 @@ export const Hero: React.FC = () => {
               onClick={() => scrollTo('venue-explorer')}
               className="px-5 py-2.5 text-xs font-medium text-amber-900 bg-amber-100 hover:bg-amber-200 rounded-full transition-colors cursor-pointer self-start lg:self-center flex items-center gap-1.5"
             >
-              <span>Explore 10+ Venues</span>
+              <span>Explore 5 Iconic Venues</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
