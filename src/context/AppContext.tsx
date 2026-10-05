@@ -17,6 +17,10 @@ interface AppContextType {
   clearBookingPreselect: () => void;
   isEditorOpen: boolean;
   setIsEditorOpen: (open: boolean) => void;
+  isOwnerAuthenticated: boolean;
+  loginAsOwner: (pin: string) => boolean;
+  logoutOwner: () => void;
+  changeAdminPin: (newPin: string) => boolean;
   recentBooking: (BookingFormValues & { venueName: string; passPrice: string; bookingId: string }) | null;
   setRecentBooking: (booking: (BookingFormValues & { venueName: string; passPrice: string; bookingId: string }) | null) => void;
   resetAllToDefault: () => void;
@@ -27,8 +31,18 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const VENUES_STORAGE_KEY = 'pacify_navratri_venues_v10';
 const SETTINGS_STORAGE_KEY = 'pacify_navratri_settings_v10';
+const ADMIN_PIN_STORAGE_KEY = 'pacify_owner_pin_v1';
+const OWNER_AUTH_STORAGE_KEY = 'pacify_owner_authenticated_v1';
+const DEFAULT_OWNER_PIN = '7359';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [adminPin, setAdminPin] = useState<string>(() => {
+    return localStorage.getItem(ADMIN_PIN_STORAGE_KEY) || DEFAULT_OWNER_PIN;
+  });
+
+  const [isOwnerAuthenticated, setIsOwnerAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem(OWNER_AUTH_STORAGE_KEY) === 'true';
+  });
   const [venues, setVenues] = useState<VenueEvent[]>(() => {
     try {
       const saved = localStorage.getItem(VENUES_STORAGE_KEY);
@@ -118,6 +132,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return priceStr;
   };
 
+  const loginAsOwner = (enteredPin: string): boolean => {
+    if (enteredPin.trim() === adminPin.trim()) {
+      setIsOwnerAuthenticated(true);
+      sessionStorage.setItem(OWNER_AUTH_STORAGE_KEY, 'true');
+      setIsEditorOpen(true);
+      return true;
+    }
+    return false;
+  };
+
+  const logoutOwner = () => {
+    setIsOwnerAuthenticated(false);
+    sessionStorage.removeItem(OWNER_AUTH_STORAGE_KEY);
+    setIsEditorOpen(false);
+  };
+
+  const changeAdminPin = (newPin: string): boolean => {
+    if (!newPin || newPin.trim().length < 4) {
+      return false;
+    }
+    const clean = newPin.trim();
+    setAdminPin(clean);
+    localStorage.setItem(ADMIN_PIN_STORAGE_KEY, clean);
+    return true;
+  };
+
+  // Keyboard shortcut: Ctrl+Shift+A or Cmd+Shift+A to trigger Owner Portal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setIsEditorOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -135,6 +187,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearBookingPreselect,
         isEditorOpen,
         setIsEditorOpen,
+        isOwnerAuthenticated,
+        loginAsOwner,
+        logoutOwner,
+        changeAdminPin,
         recentBooking,
         setRecentBooking,
         resetAllToDefault,

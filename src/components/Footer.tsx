@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { PhoneCall, MessageCircle, Mail, Instagram, ShieldCheck, ArrowUp } from 'lucide-react';
+import { PhoneCall, MessageCircle, Mail, Instagram, ShieldCheck, ArrowUp, Lock } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { settings, setIsEditorOpen } = useApp();
@@ -32,14 +32,6 @@ export const Footer: React.FC = () => {
             <p className="text-xs text-stone-400 leading-relaxed">
               Gujarat’s premier official Navratri passes reservation platform. Connecting Garba enthusiasts with the finest cultural grounds, clubs, and royal amphitheaters.
             </p>
-            <div className="pt-2">
-              <button
-                onClick={() => setIsEditorOpen(true)}
-                className="text-[11px] font-semibold text-amber-400 hover:text-amber-300 underline cursor-pointer"
-              >
-                Customize Pass Prices & Contact Info
-              </button>
-            </div>
           </div>
 
           {/* Quick Links */}
@@ -150,13 +142,22 @@ export const Footer: React.FC = () => {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
           <p>© 2026 [{settings.brandName || 'PACIFY'}]. All Rights Reserved.</p>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
             <span>Verified Organizer Passes</span>
             <span>·</span>
             <span>Zero Black Market Guarantee</span>
+            <span>·</span>
+            <button
+              onClick={() => setIsEditorOpen(true)}
+              className="inline-flex items-center gap-1 text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
+              title="Restricted to Website Owner"
+            >
+              <Lock className="w-3 h-3" />
+              <span>Owner Access</span>
+            </button>
             <button
               onClick={scrollToTop}
-              className="p-2 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition-colors cursor-pointer ml-auto sm:ml-0"
               aria-label="Scroll to top"
             >
               <ArrowUp className="w-3.5 h-3.5" />

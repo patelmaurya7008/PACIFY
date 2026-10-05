@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Sparkles, SlidersHorizontal, Menu, X, PhoneCall } from 'lucide-react';
+import { ShieldCheck, Menu, X, PhoneCall } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { settings, setIsEditorOpen } = useApp();
+  const { settings, setIsEditorOpen, isOwnerAuthenticated } = useApp();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -80,15 +80,17 @@ export const Header: React.FC = () => {
 
           {/* Zone 3: 1-2 primary actions */}
           <div className="flex items-center gap-3">
-            {/* Quick Content / Admin Editor toggle button */}
-            <button
-              onClick={() => setIsEditorOpen(true)}
-              title="Edit event details, pricing, and contact info"
-              className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-full transition-colors flex items-center justify-center cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
-              aria-label="Edit content and settings"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
+            {/* Owner Management Badge (Only visible when Owner is authenticated) */}
+            {isOwnerAuthenticated && (
+              <button
+                onClick={() => setIsEditorOpen(true)}
+                title="Owner Control Panel"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-full transition-colors cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
+                <span>Owner Mode</span>
+              </button>
+            )}
 
             {/* Direct Call Quick Link */}
             <a
@@ -152,16 +154,18 @@ export const Header: React.FC = () => {
               >
                 Contact
               </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setIsEditorOpen(true);
-                }}
-                className="flex items-center gap-2 py-2 px-3 text-amber-800 bg-amber-50 rounded-lg font-medium"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                <span>Edit Pass Prices & Contact Info</span>
-              </button>
+              {isOwnerAuthenticated && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsEditorOpen(true);
+                  }}
+                  className="flex items-center gap-2 py-2 px-3 text-amber-900 bg-amber-100 rounded-lg font-medium"
+                >
+                  <ShieldCheck className="w-4 h-4 text-amber-700" />
+                  <span>Owner Price & Contact Settings</span>
+                </button>
+              )}
             </div>
           </div>
         )}
