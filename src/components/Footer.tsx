@@ -58,26 +58,10 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => scrollTo('featured-events')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer"
-                >
-                  Events
-                </button>
-              </li>
-              <li>
-                <button
                   onClick={() => scrollTo('venue-explorer')}
                   className="hover:text-amber-300 transition-colors cursor-pointer"
                 >
-                  Venues
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => scrollTo('passes')}
-                  className="hover:text-amber-300 transition-colors cursor-pointer"
-                >
-                  Passes & Prices
+                  Venues & Passes
                 </button>
               </li>
               <li>
@@ -94,6 +78,14 @@ export const Footer: React.FC = () => {
                   className="hover:text-amber-300 transition-colors cursor-pointer"
                 >
                   Book Pass
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => scrollTo('contact')}
+                  className="hover:text-amber-300 transition-colors cursor-pointer"
+                >
+                  Contact Desk
                 </button>
               </li>
             </ul>

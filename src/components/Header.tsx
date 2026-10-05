@@ -53,28 +53,22 @@ export const Header: React.FC = () => {
               Home
             </button>
             <button
-              onClick={() => scrollToSection('featured-events')}
-              className="hover:text-stone-950 transition-colors py-1 cursor-pointer focus:outline-hidden focus-visible:text-amber-700"
-            >
-              Events
-            </button>
-            <button
               onClick={() => scrollToSection('venue-explorer')}
               className="hover:text-stone-950 transition-colors py-1 cursor-pointer focus:outline-hidden focus-visible:text-amber-700"
             >
               Venues
             </button>
             <button
-              onClick={() => scrollToSection('passes')}
-              className="hover:text-stone-950 transition-colors py-1 cursor-pointer focus:outline-hidden focus-visible:text-amber-700"
-            >
-              Passes & Prices
-            </button>
-            <button
               onClick={() => scrollToSection('experience')}
               className="hover:text-stone-950 transition-colors py-1 cursor-pointer focus:outline-hidden focus-visible:text-amber-700"
             >
-              About
+              Experience
+            </button>
+            <button
+              onClick={() => scrollToSection('booking')}
+              className="hover:text-stone-950 transition-colors py-1 cursor-pointer focus:outline-hidden focus-visible:text-amber-700"
+            >
+              Book Pass
             </button>
             <button
               onClick={() => scrollToSection('contact')}
@@ -135,28 +129,22 @@ export const Header: React.FC = () => {
                 Home
               </button>
               <button
-                onClick={() => scrollToSection('featured-events')}
-                className="text-left py-2 px-3 hover:bg-stone-100 rounded-lg"
-              >
-                Events
-              </button>
-              <button
                 onClick={() => scrollToSection('venue-explorer')}
                 className="text-left py-2 px-3 hover:bg-stone-100 rounded-lg"
               >
                 Venues
               </button>
               <button
-                onClick={() => scrollToSection('passes')}
-                className="text-left py-2 px-3 hover:bg-stone-100 rounded-lg"
-              >
-                Passes & Prices
-              </button>
-              <button
                 onClick={() => scrollToSection('experience')}
                 className="text-left py-2 px-3 hover:bg-stone-100 rounded-lg"
               >
-                About
+                Experience
+              </button>
+              <button
+                onClick={() => scrollToSection('booking')}
+                className="text-left py-2 px-3 hover:bg-stone-100 rounded-lg"
+              >
+                Book Pass
               </button>
               <button
                 onClick={() => scrollToSection('contact')}
